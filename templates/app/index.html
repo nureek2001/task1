@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="header__main">
+    <div class="container">
+        <ul class="header__links">
+            <li><button id = "refresh" onclick = "refresh()">Қайтадан жасау</button></li>
+            <li><button id="list" onclick="namelist()">Оқушылар тізімі</button></li>
+            <li><button id = "save" onclick = "save()">Сақтау</button></li>
+            <li><button id = "go" onclick = "go()">Таңдау</button></li>
+            <li><button id = "groups" onclick = "togroups()">Топқа бөлу</button></li>
+        </ul>
+    </div>
+</div>
+<div class="main">
+    <div class="container">
+        <div id = "mainpage">
+            <p id = "maintext">Қанекей, кім шығады?</p>
+            <img src="{% static 'img/mainimg.jpg' %}" alt="">
+        </div>
+        <div id="pupils__list"  style = "display: none">
+            <p id = "maintext__list">Оқушылардың есімдерін өзгертіңіз</p>
+            <textarea name = "namesbox" id = "namesbox" ></textarea>
+        </div>
+        <div id = "choose__pupil" style = "display: none">
+            <section class="mainWheel">
+				<span>
+					<ul class="wheel"></ul>
+				</span>
+				<button class="btn--wheel">Айналдыру</button>
+			</section>
+			<h1 class="msg"></h1>
+        </div>
+        <div id = "pupils__group" style = "display: none">
+            <div id = "group__pupils">
+                <input type="number" id = "group__pupils-num">
+                <button id = "group__pupils-save">Бөлу</button>
+                <p id = group__pupils-groups></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    var linesArray = [];
+    var mainPage = document.getElementById("mainpage");
+    var pupilsList = document.getElementById("pupils__list");
+    var choosePupil = document.getElementById("choose__pupil");
+    var pupilsGroup = document.getElementById("pupils__group");
+    function namelist(){
+        document.getElementById('maintext__list').innerHTML = "Оқушылардың есімдерін өзгертіңіз";
+        document.getElementById('namesbox').disabled = false;
+        if(pupilsList.style.display === "none"){
+            pupilsList.style.display = "block";
+            mainPage.style.display = "none";
+            choosePupil.style.display = "none";
+            pupilsGroup.style.display = "none";
+        }
+    }
+
+    function save(){
+        var textareaValue = document.querySelector('#namesbox').value;
+        linesArray = textareaValue.split('\n');
+        document.getElementById('namesbox').disabled = true;
+        document.getElementById('maintext__list').innerHTML = "Оқушылардың тізімі сақталды";
+        linesArray = linesArray.filter(checkNull);
+    }
+
+    function checkNull(name){
+        return name != "";
+    }
+    function getRandomInt(max) {
+        return Math.floor(Math.random() * max);
+    }  
+    function go(){
+
+        var x = document.getElementById("pupils__list");
+        var y = document.getElementById("mainpage");
+        var z = document.getElementById("choose__pupil");
+        if(choosePupil.style.display === "none"){
+            choosePupil.style.display = "block";
+            mainPage.style.display = "none";
+            pupilsList.style.display = "none";
+            pupilsGroup.style.display = "none";
+        }
+        const $ = document.querySelector.bind(document);
+        const wheel = $('.wheel');
+        if(wheel.hasChildNodes()){
+            while(wheel.hasChildNodes()){
+                wheel.removeChild(wheel.firstChild);
+            }
+        }
+        let timeRotate = 7000; //7 giây
+	    let currentRotate = 0;
+	    let isRotating = false;
+        const btnWheel = $('.btn--wheel');
+	    const showMsg = $('.msg');
+
+        const size = linesArray.length;
+        const rotate = 360/size;
+        const skewY = 90-rotate;
+        linesArray.map((item,index)=>{
+            const elm = document.createElement('li');
+		elm.style.transform = `rotate(${
+			rotate * index
+		}deg) skewY(-${skewY}deg)`;
+        elm.style.border = "solid";
+        elm.style.borderColor = "aqua"; 
+		if (index % 2 == 0) {
+			elm.innerHTML = `<p style="transform: skewY(${skewY}deg) rotate(${
+				rotate / 2
+			}deg);" class="text text-1">
+			<b>${item}</b>
+		</p>`;
+		} else {
+			elm.innerHTML = `<p style="transform: skewY(${skewY}deg) rotate(${
+				rotate / 2
+			}deg);" class="text text-2">
+		<b>${item}</b>
+		</p>`;
+		}
+
+		wheel.appendChild(elm);
+        });
+
+        var indexes = [];
+        const start = () => {
+            showMsg.innerHTML = '';
+            isRotating = true;
+            var random = getRandomInt(size);
+            while(indexes.includes(random)){
+                random = getRandomInt(size);
+            }
+            indexes.push(random);
+            const pupil = linesArray[random];
+            currentRotate += 360 * 10;
+            rotateWheel(currentRotate, random);
+            showPupil(pupil);
+            if(indexes.length == size){
+                indexes = [];
+            }
+
+	    };
+
+	    const rotateWheel = (currentRotate, index) => {
+            $('.wheel').style.transform = `rotate(${
+                currentRotate - index * rotate - rotate / 2
+            }deg)`;
+	    };
+	    const showPupil = pupil => {
+            let timer = setTimeout(() => {
+                isRotating = false;
+
+                showMsg.innerHTML = `Тақтаға "${pupil}" шығады`;
+
+                clearTimeout(timer);
+            }, timeRotate);
+	    };
+        btnWheel.addEventListener('click', () => {
+            if(linesArray.length>0){
+                !isRotating && start();
+            }
+            else{
+                showMsg.innerHTML = `Оқушылар тізімі бос`;
+
+            }
+
+        });
+    }
+
+    function togroups(){
+        if (pupilsGroup.style.display === "none"){
+            pupilsGroup.style.display = "block";
+            pupilsList.style.display = "none";
+            mainPage.style.display = "none";
+            choosePupil.style.display = "none";
+        }
+        var save_btn = document.getElementById('group__pupils-save');
+        save_btn.addEventListener('click', () => {
+            var numofgroups = document.getElementById('group__pupils-num').value;
+            var groups__text = document.getElementById('group__pupils-groups');
+            if(numofgroups<1){
+                groups__text.innerHTML = "1 немесе одан көп болуы қажет";
+            }
+            else{
+                
+                var indexes = [];
+                const size = linesArray.length;
+                const numofpupils = Math.floor(size/numofgroups);
+                groups__text.innerHTML = "";
+                for(let i = 0; i<numofgroups-1; i++){
+                    groups__text.innerHTML += (i+1) + " топ:<br />";
+                    for(let j = 0; j<numofpupils; j++){
+                        var random = getRandomInt(size);
+                        while(indexes.includes(random)){
+                            random = getRandomInt(size);
+                        }
+                        indexes.push(random);
+                        groups__text.innerHTML += linesArray[random] + "<br />";
+                    }
+
+                }
+                var remainpupils = size - numofpupils*(numofgroups-1);
+                groups__text.innerHTML += numofgroups + " топ:<br />";
+                for(let j = 0; j<remainpupils; j++){
+                    var random = getRandomInt(size);
+                    while(indexes.includes(random)){
+                        random = getRandomInt(size);
+                    }
+                    indexes.push(random);
+                    groups__text.innerHTML += linesArray[random] + "<br />";
+                }
+            }
+        });
+
+    }
+
+
+
+
+
+   
+</script>
+{% endblock %}
